@@ -80,6 +80,72 @@ class Architectures(Enum):
 
   ])
 
+  FC_2_32 = tf.keras.models.Sequential([
+    tf.keras.layers.Flatten(input_shape=(28, 28)),
+    tf.keras.layers.Dense(32, activation='sigmoid'),
+    tf.keras.layers.Dense(16, activation='sigmoid'),
+    tf.keras.layers.Dense(Settings.LABELS, activation='softmax')
+  ])
+
+  FC_2_64 = tf.keras.models.Sequential([
+    tf.keras.layers.Flatten(input_shape=(28, 28)),
+    tf.keras.layers.Dense(64, activation='sigmoid'),
+    tf.keras.layers.Dense(32, activation='sigmoid'),
+    tf.keras.layers.Dense(Settings.LABELS, activation='softmax')
+  ])
+
+  FC_2_128 = tf.keras.models.Sequential([
+    tf.keras.layers.Flatten(input_shape=(28, 28)),
+    tf.keras.layers.Dense(128, activation='sigmoid'),
+    tf.keras.layers.Dense(64, activation='sigmoid'),
+    tf.keras.layers.Dense(Settings.LABELS, activation='softmax')
+  ])
+
+  FC_2_256 = tf.keras.models.Sequential([
+    tf.keras.layers.Flatten(input_shape=(28, 28)),
+    tf.keras.layers.Dense(256, activation='sigmoid'),
+    tf.keras.layers.Dense(128, activation='sigmoid'),
+    tf.keras.layers.Dense(Settings.LABELS, activation='softmax')
+  ])
+
+  FC_2_512 = tf.keras.models.Sequential([
+    tf.keras.layers.Flatten(input_shape=(28, 28)),
+    tf.keras.layers.Dense(512, activation='sigmoid'),
+    tf.keras.layers.Dense(256, activation='sigmoid'),
+    tf.keras.layers.Dense(Settings.LABELS, activation='softmax')
+  ])
+
+  FC_2_1024 = tf.keras.models.Sequential([
+    tf.keras.layers.Flatten(input_shape=(28, 28)),
+    tf.keras.layers.Dense(1024, activation='sigmoid'),
+    tf.keras.layers.Dense(512, activation='sigmoid'),
+    tf.keras.layers.Dense(Settings.LABELS, activation='softmax')
+  ])
+
+  FC_3_128 = tf.keras.models.Sequential([
+    tf.keras.layers.Flatten(input_shape=(28, 28)),
+    tf.keras.layers.Dense(128, activation='sigmoid'),
+    tf.keras.layers.Dense(64, activation='sigmoid'),
+    tf.keras.layers.Dense(32, activation='sigmoid'),
+    tf.keras.layers.Dense(Settings.LABELS, activation='softmax')
+  ])
+
+  FC_3_256 = tf.keras.models.Sequential([
+    tf.keras.layers.Flatten(input_shape=(28, 28)),
+    tf.keras.layers.Dense(256, activation='sigmoid'),
+    tf.keras.layers.Dense(128, activation='sigmoid'),
+    tf.keras.layers.Dense(64, activation='sigmoid'),
+    tf.keras.layers.Dense(Settings.LABELS, activation='softmax')
+  ])
+
+  FC_3_512 = tf.keras.models.Sequential([
+    tf.keras.layers.Flatten(input_shape=(28, 28)),
+    tf.keras.layers.Dense(512, activation='sigmoid'),
+    tf.keras.layers.Dense(256, activation='sigmoid'),
+    tf.keras.layers.Dense(128, activation='sigmoid'),
+    tf.keras.layers.Dense(Settings.LABELS, activation='softmax')
+  ])
+
   COMP_FC_1_2 = tf.keras.models.Sequential([
     tf.keras.layers.Flatten(input_shape=(28, 28)),
     tf.keras.layers.Dense(2, activation='sigmoid'),
@@ -113,5 +179,33 @@ class Architectures(Enum):
   COMP_FC_1_64 = tf.keras.models.Sequential([
     tf.keras.layers.Flatten(input_shape=(28, 28)),
     tf.keras.layers.Dense(64, activation='sigmoid'),
+    tf.keras.layers.Dense(1, activation='sigmoid')
+  ])
+
+  COMP_FC_2_32 = tf.keras.models.Sequential([
+    tf.keras.layers.Flatten(input_shape=(28, 28)),
+    tf.keras.layers.Dense(32, activation='sigmoid'),
+    tf.keras.layers.Dense(16, activation='sigmoid'),
+    tf.keras.layers.Dense(1, activation='sigmoid')
+  ])
+
+  COMP_FC_2_64 = tf.keras.models.Sequential([
+    tf.keras.layers.Flatten(input_shape=(28, 28)),
+    tf.keras.layers.Dense(64, activation='sigmoid'),
+    tf.keras.layers.Dense(32, activation='sigmoid'),
+    tf.keras.layers.Dense(1, activation='sigmoid')
+  ])
+
+  COMP_FC_2_128 = tf.keras.models.Sequential([
+    tf.keras.layers.Flatten(input_shape=(28, 28)),
+    tf.keras.layers.Dense(128, activation='sigmoid'),
+    tf.keras.layers.Dense(64, activation='sigmoid'),
+    tf.keras.layers.Dense(1, activation='sigmoid')
+  ])
+
+  COMP_FC_2_256 = tf.keras.models.Sequential([
+    tf.keras.layers.Flatten(input_shape=(28, 28)),
+    tf.keras.layers.Dense(256, activation='sigmoid'),
+    tf.keras.layers.Dense(128, activation='sigmoid'),
     tf.keras.layers.Dense(1, activation='sigmoid')
   ])

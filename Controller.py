@@ -13,8 +13,8 @@ class Controller:
         self.__data_manager = DataManager()
 
         # Intialize experiments to run
-        self.__atomic_experiments = [Architectures.FC_1_32]
-        self.__composite_experiments = [(Architectures.COMP_FC_1_16, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])]
+        self.__atomic_experiments = [] # format: Architectures.FC_2_512
+        self.__composite_experiments = [] # format: (Architectures.FC_2_512, [0, 1, 2, ..., 9])
 
         self.run_experiments()
 
