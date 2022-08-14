@@ -25,6 +25,8 @@ class Logger:
         evaluation_path = os.path.join(self.__log_folder, "model accuracy.txt")
         self.__accuracy_file = open(evaluation_path, "w")
 
+        self.__set_plt_params()
+
     def print(self, string, log_level = 0):
         if self.__logging_enabled and log_level.value >= Settings.LOG_LEVEL:
             print(string)
@@ -123,3 +125,21 @@ class Logger:
         miss_csv.writerow(["Miss Difference"])
         for miss in misses:
             miss_csv.writerow([miss])
+
+    def __set_plt_params(self):
+        background_color = "#1E1E1E"
+        foreground_color = "#DBDBDB"
+        plt.rcParams["figure.facecolor"] = background_color
+        plt.rcParams["figure.edgecolor"] = background_color
+
+        plt.rcParams["axes.facecolor"] = background_color
+        plt.rcParams["axes.edgecolor"] = foreground_color
+        plt.rcParams["axes.titlecolor"] = foreground_color
+        plt.rcParams["axes.labelcolor"] = foreground_color
+
+        plt.rcParams["xtick.color"] = foreground_color
+        plt.rcParams["xtick.labelcolor"] = foreground_color
+        plt.rcParams["ytick.color"] = foreground_color
+        plt.rcParams["ytick.labelcolor"] = foreground_color
+
+        plt.rcParams["legend.labelcolor"] = foreground_color
