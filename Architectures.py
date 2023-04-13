@@ -4,208 +4,93 @@ import tensorflow as tf
 import Settings
 
 class Architectures(Enum):
-  #     from https://www.tensorflow.org/tutorials/quickstart/beginner
-  TF_DEFAULT = tf.keras.models.Sequential([
-    tf.keras.layers.Flatten(input_shape=(28, 28)),
-    tf.keras.layers.Dense(128, activation='relu'),
-    tf.keras.layers.Dropout(0.2),
-    tf.keras.layers.Dense(Settings.LABELS)
+  FC_3_32 = tf.keras.models.Sequential([
+    tf.keras.layers.Dense(32, activation='relu', input_dim=Settings.OBSERVATION_SIZE+1),
+    tf.keras.layers.Dense(16, activation='relu'),
+    tf.keras.layers.Dense(32, activation='relu'),
+    tf.keras.layers.Dense(Settings.OBSERVATION_SIZE, activation='linear')
   ])
 
-  #     from https://medium.com/tebs-lab/how-to-classify-mnist-digits-with-different-neural-network-architectures-39c75a0f03e3
-  FC_1_2 = tf.keras.models.Sequential([
-    tf.keras.layers.Flatten(input_shape=(28, 28)),
-    tf.keras.layers.Dense(2, activation='sigmoid'),
-    tf.keras.layers.Dense(Settings.LABELS, activation='softmax')
+  FC_3_64 = tf.keras.models.Sequential([
+    tf.keras.layers.Dense(64, activation='relu', input_dim=Settings.OBSERVATION_SIZE+1),
+    tf.keras.layers.Dense(32, activation='relu'),
+    tf.keras.layers.Dense(64, activation='relu'),
+    tf.keras.layers.Dense(Settings.OBSERVATION_SIZE, activation='linear')
   ])
 
-  FC_1_4 = tf.keras.models.Sequential([
-    tf.keras.layers.Flatten(input_shape=(28, 28)),
-    tf.keras.layers.Dense(4, activation='sigmoid'),
-    tf.keras.layers.Dense(Settings.LABELS, activation='softmax')
+  FC_5_32 = tf.keras.models.Sequential([
+    tf.keras.layers.Dense(32, activation='relu', input_dim=Settings.OBSERVATION_SIZE+1),
+    tf.keras.layers.Dense(16, activation='relu'),
+    tf.keras.layers.Dense(8, activation='relu'),
+    tf.keras.layers.Dense(16, activation='relu'),
+    tf.keras.layers.Dense(32, activation='relu'),
+    tf.keras.layers.Dense(Settings.OBSERVATION_SIZE, activation='linear')
   ])
 
-  FC_1_8 = tf.keras.models.Sequential([
-    tf.keras.layers.Flatten(input_shape=(28, 28)),
-    tf.keras.layers.Dense(8, activation='sigmoid'),
-    tf.keras.layers.Dense(Settings.LABELS, activation='softmax')
+  FC_5_64 = tf.keras.models.Sequential([
+    tf.keras.layers.Dense(64, activation='relu', input_dim=Settings.OBSERVATION_SIZE+1),
+    tf.keras.layers.Dense(32, activation='relu'),
+    tf.keras.layers.Dense(16, activation='relu'),
+    tf.keras.layers.Dense(32, activation='relu'),
+    tf.keras.layers.Dense(64, activation='relu'),
+    tf.keras.layers.Dense(Settings.OBSERVATION_SIZE, activation='linear')
   ])
 
-  FC_1_16 = tf.keras.models.Sequential([
-    tf.keras.layers.Flatten(input_shape=(28, 28)),
-    tf.keras.layers.Dense(16, activation='sigmoid'),
-    tf.keras.layers.Dense(Settings.LABELS, activation='softmax')
+  REWARD_1_32 = tf.keras.models.Sequential([
+    tf.keras.layers.Dense(32, activation='relu', input_dim=Settings.OBSERVATION_SIZE),
+    tf.keras.layers.Dense(1)
   ])
 
-  FC_1_32 = tf.keras.models.Sequential([
-    tf.keras.layers.Flatten(input_shape=(28, 28)),
-    tf.keras.layers.Dense(32, activation='sigmoid'),
-    tf.keras.layers.Dense(Settings.LABELS, activation='softmax')
+  REWARD_1_64 = tf.keras.models.Sequential([
+    tf.keras.layers.Dense(64, activation='relu', input_dim=Settings.OBSERVATION_SIZE),
+    tf.keras.layers.Dense(1)
   ])
 
-  FC_1_64 = tf.keras.models.Sequential([
-    tf.keras.layers.Flatten(input_shape=(28, 28)),
-    tf.keras.layers.Dense(64, activation='sigmoid'),
-    tf.keras.layers.Dense(Settings.LABELS, activation='softmax')
+  REWARD_1_128 = tf.keras.models.Sequential([
+    tf.keras.layers.Dense(128, activation='relu', input_dim=Settings.OBSERVATION_SIZE),
+    tf.keras.layers.Dense(1)
   ])
 
-  FC_1_128 = tf.keras.models.Sequential([
-    tf.keras.layers.Flatten(input_shape=(28, 28)),
-    tf.keras.layers.Dense(128, activation='sigmoid'),
-    tf.keras.layers.Dense(Settings.LABELS, activation='softmax')
+  REWARD_1_256 = tf.keras.models.Sequential([
+    tf.keras.layers.Dense(256, activation='relu', input_dim=Settings.OBSERVATION_SIZE),
+    tf.keras.layers.Dense(1)
   ])
 
-  FC_1_256 = tf.keras.models.Sequential([
-    tf.keras.layers.Flatten(input_shape=(28, 28)),
-    tf.keras.layers.Dense(256, activation='sigmoid'),
-    tf.keras.layers.Dense(Settings.LABELS, activation='softmax')
+  REWARD_2_16 = tf.keras.models.Sequential([
+    tf.keras.layers.Dense(16, activation='relu', input_dim=Settings.OBSERVATION_SIZE),
+    tf.keras.layers.Dense(8, activation='relu'),
+    tf.keras.layers.Dense(1)
   ])
 
-  FC_1_512 = tf.keras.models.Sequential([
-    tf.keras.layers.Flatten(input_shape=(28, 28)),
-    tf.keras.layers.Dense(512, activation='sigmoid'),
-    tf.keras.layers.Dense(Settings.LABELS, activation='softmax')
+  REWARD_2_32 = tf.keras.models.Sequential([
+    tf.keras.layers.Dense(32, activation='relu', input_dim=Settings.OBSERVATION_SIZE),
+    tf.keras.layers.Dense(16, activation='relu'),
+    tf.keras.layers.Dense(1)
   ])
 
-  FC_1_1024 = tf.keras.models.Sequential([
-    tf.keras.layers.Flatten(input_shape=(28, 28)),
-    tf.keras.layers.Dense(1024, activation='sigmoid'),
-    tf.keras.layers.Dense(Settings.LABELS, activation='softmax')
+  REWARD_2_64 = tf.keras.models.Sequential([
+    tf.keras.layers.Dense(64, activation='relu', input_dim=Settings.OBSERVATION_SIZE),
+    tf.keras.layers.Dense(32, activation='relu'),
+    tf.keras.layers.Dense(1)
   ])
 
-  FC_1_2048 = tf.keras.models.Sequential([
-    tf.keras.layers.Flatten(input_shape=(28, 28)),
-    tf.keras.layers.Dense(2048, activation='sigmoid'),
-    tf.keras.layers.Dense(Settings.LABELS, activation='softmax')
-
+  REWARD_3_32 = tf.keras.models.Sequential([
+    tf.keras.layers.Dense(32, activation='relu', input_dim=Settings.OBSERVATION_SIZE),
+    tf.keras.layers.Dense(16, activation='relu'),
+    tf.keras.layers.Dense(8, activation='relu'),
+    tf.keras.layers.Dense(1)
   ])
 
-  FC_2_32 = tf.keras.models.Sequential([
-    tf.keras.layers.Flatten(input_shape=(28, 28)),
-    tf.keras.layers.Dense(32, activation='sigmoid'),
-    tf.keras.layers.Dense(16, activation='sigmoid'),
-    tf.keras.layers.Dense(Settings.LABELS, activation='softmax')
+  REWARD_3_64 = tf.keras.models.Sequential([
+    tf.keras.layers.Dense(64, activation='relu', input_dim=Settings.OBSERVATION_SIZE),
+    tf.keras.layers.Dense(32, activation='relu'),
+    tf.keras.layers.Dense(16, activation='relu'),
+    tf.keras.layers.Dense(1)
   ])
 
-  FC_2_64 = tf.keras.models.Sequential([
-    tf.keras.layers.Flatten(input_shape=(28, 28)),
-    tf.keras.layers.Dense(64, activation='sigmoid'),
-    tf.keras.layers.Dense(32, activation='sigmoid'),
-    tf.keras.layers.Dense(Settings.LABELS, activation='softmax')
-  ])
-
-  FC_2_128 = tf.keras.models.Sequential([
-    tf.keras.layers.Flatten(input_shape=(28, 28)),
-    tf.keras.layers.Dense(128, activation='sigmoid'),
-    tf.keras.layers.Dense(64, activation='sigmoid'),
-    tf.keras.layers.Dense(Settings.LABELS, activation='softmax')
-  ])
-
-  FC_2_256 = tf.keras.models.Sequential([
-    tf.keras.layers.Flatten(input_shape=(28, 28)),
-    tf.keras.layers.Dense(256, activation='sigmoid'),
-    tf.keras.layers.Dense(128, activation='sigmoid'),
-    tf.keras.layers.Dense(Settings.LABELS, activation='softmax')
-  ])
-
-  FC_2_512 = tf.keras.models.Sequential([
-    tf.keras.layers.Flatten(input_shape=(28, 28)),
-    tf.keras.layers.Dense(512, activation='sigmoid'),
-    tf.keras.layers.Dense(256, activation='sigmoid'),
-    tf.keras.layers.Dense(Settings.LABELS, activation='softmax')
-  ])
-
-  FC_2_1024 = tf.keras.models.Sequential([
-    tf.keras.layers.Flatten(input_shape=(28, 28)),
-    tf.keras.layers.Dense(1024, activation='sigmoid'),
-    tf.keras.layers.Dense(512, activation='sigmoid'),
-    tf.keras.layers.Dense(Settings.LABELS, activation='softmax')
-  ])
-
-  FC_3_128 = tf.keras.models.Sequential([
-    tf.keras.layers.Flatten(input_shape=(28, 28)),
-    tf.keras.layers.Dense(128, activation='sigmoid'),
-    tf.keras.layers.Dense(64, activation='sigmoid'),
-    tf.keras.layers.Dense(32, activation='sigmoid'),
-    tf.keras.layers.Dense(Settings.LABELS, activation='softmax')
-  ])
-
-  FC_3_256 = tf.keras.models.Sequential([
-    tf.keras.layers.Flatten(input_shape=(28, 28)),
-    tf.keras.layers.Dense(256, activation='sigmoid'),
-    tf.keras.layers.Dense(128, activation='sigmoid'),
-    tf.keras.layers.Dense(64, activation='sigmoid'),
-    tf.keras.layers.Dense(Settings.LABELS, activation='softmax')
-  ])
-
-  FC_3_512 = tf.keras.models.Sequential([
-    tf.keras.layers.Flatten(input_shape=(28, 28)),
-    tf.keras.layers.Dense(512, activation='sigmoid'),
-    tf.keras.layers.Dense(256, activation='sigmoid'),
-    tf.keras.layers.Dense(128, activation='sigmoid'),
-    tf.keras.layers.Dense(Settings.LABELS, activation='softmax')
-  ])
-
-  COMP_FC_1_2 = tf.keras.models.Sequential([
-    tf.keras.layers.Flatten(input_shape=(28, 28)),
-    tf.keras.layers.Dense(2, activation='sigmoid'),
-    tf.keras.layers.Dense(1, activation='sigmoid')
-  ])
-
-  COMP_FC_1_4 = tf.keras.models.Sequential([
-    tf.keras.layers.Flatten(input_shape=(28, 28)),
-    tf.keras.layers.Dense(4, activation='sigmoid'),
-    tf.keras.layers.Dense(1, activation='sigmoid')
-  ])
-
-  COMP_FC_1_8 = tf.keras.models.Sequential([
-    tf.keras.layers.Flatten(input_shape=(28, 28)),
-    tf.keras.layers.Dense(8, activation='sigmoid'),
-    tf.keras.layers.Dense(1, activation='sigmoid')
-  ])
-
-  COMP_FC_1_16 = tf.keras.models.Sequential([
-    tf.keras.layers.Flatten(input_shape=(28, 28)),
-    tf.keras.layers.Dense(16, activation='sigmoid'),
-    tf.keras.layers.Dense(1, activation='sigmoid')
-  ])
-
-  COMP_FC_1_32 = tf.keras.models.Sequential([
-    tf.keras.layers.Flatten(input_shape=(28, 28)),
-    tf.keras.layers.Dense(32, activation='sigmoid'),
-    tf.keras.layers.Dense(1, activation='sigmoid')
-  ])
-
-  COMP_FC_1_64 = tf.keras.models.Sequential([
-    tf.keras.layers.Flatten(input_shape=(28, 28)),
-    tf.keras.layers.Dense(64, activation='sigmoid'),
-    tf.keras.layers.Dense(1, activation='sigmoid')
-  ])
-
-  COMP_FC_2_32 = tf.keras.models.Sequential([
-    tf.keras.layers.Flatten(input_shape=(28, 28)),
-    tf.keras.layers.Dense(32, activation='sigmoid'),
-    tf.keras.layers.Dense(16, activation='sigmoid'),
-    tf.keras.layers.Dense(1, activation='sigmoid')
-  ])
-
-  COMP_FC_2_64 = tf.keras.models.Sequential([
-    tf.keras.layers.Flatten(input_shape=(28, 28)),
-    tf.keras.layers.Dense(64, activation='sigmoid'),
-    tf.keras.layers.Dense(32, activation='sigmoid'),
-    tf.keras.layers.Dense(1, activation='sigmoid')
-  ])
-
-  COMP_FC_2_128 = tf.keras.models.Sequential([
-    tf.keras.layers.Flatten(input_shape=(28, 28)),
-    tf.keras.layers.Dense(128, activation='sigmoid'),
-    tf.keras.layers.Dense(64, activation='sigmoid'),
-    tf.keras.layers.Dense(1, activation='sigmoid')
-  ])
-
-  COMP_FC_2_256 = tf.keras.models.Sequential([
-    tf.keras.layers.Flatten(input_shape=(28, 28)),
-    tf.keras.layers.Dense(256, activation='sigmoid'),
-    tf.keras.layers.Dense(128, activation='sigmoid'),
-    tf.keras.layers.Dense(1, activation='sigmoid')
+  REWARD_3_128 = tf.keras.models.Sequential([
+    tf.keras.layers.Dense(128, activation='relu', input_dim=Settings.OBSERVATION_SIZE),
+    tf.keras.layers.Dense(64, activation='relu'),
+    tf.keras.layers.Dense(32, activation='relu'),
+    tf.keras.layers.Dense(1)
   ])

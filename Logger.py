@@ -1,130 +1,121 @@
 import csv
 import matplotlib.pyplot as plt
+import numpy as np
 import os
-import time
 
 import Settings
 
 class Logger:
-    def __init__(self, logging_enabled=True):
+    def __init__(self, architecture_folder, logging_enabled=True):
+        self.__architecture_folder = architecture_folder
         self.__logging_enabled = logging_enabled
 
-        # get current directory path
-        dir_path = os.path.dirname(os.path.abspath(__file__))
-        
-        # create sub-folder for all experiment graphs
-        experiment_path = os.path.join(dir_path, "experiment records")
-        if not os.path.isdir(experiment_path):
-            os.mkdir(experiment_path)
+        # create sub-folders for architecture data
+        self.__session_path = None
+            
+        self.__reward_episode_writer = None
+        self.__reward_session_writer = None
 
-        # create sub-folder for specific experiment run
-        self.__log_folder = os.path.join(experiment_path, str(time.strftime("%Y-%m-%d_%H-%M-%S")))
-        if not os.path.isdir(self.__log_folder):
-            os.mkdir(self.__log_folder)
-
-        evaluation_path = os.path.join(self.__log_folder, "model accuracy.txt")
-        self.__accuracy_file = open(evaluation_path, "w")
+        self.__actor_train_writer = None
+        self.__actor_evaluate_writer = None
 
         self.__set_plt_params()
+
+    @property
+    def session(self):
+        return self._session
+
+    @session.setter
+    def session(self, value):
+        self.__session_path = os.path.join(self.__architecture_folder, "Session " + str(value))
+        if not os.path.isdir(self.__session_path):
+            os.mkdir(self.__session_path)
+
+        if self.__logging_enabled and Settings.LOG_TRAINING:
+            actor_training_path = os.path.join(self.__session_path, 'training.csv')
+            training_file = open(actor_training_path, 'w', newline='')
+            self.__actor_train_writer = csv.writer(training_file)
+            self.__actor_train_writer.writerow(["Epoch", "Training MSE", "Validation MSE"])
+
+        if self.__logging_enabled and Settings.LOG_EVALUATION:
+            actor_evaluation_path = os.path.join(self.__session_path, 'evaluation.csv')
+            evaluation_file = open(actor_evaluation_path, 'w', newline='')
+            self.__actor_evaluate_writer = csv.writer(evaluation_file)
+            self.__actor_evaluate_writer.writerow(["Step", "Evaluation MSE"])
+
+        if self.__logging_enabled and Settings.LOG_SESSION_REWARD:
+            session_reward_evaluation_path = os.path.join(self.__session_path, 'reward.csv')
+            session_reward_file = open(session_reward_evaluation_path, 'w', newline='')
+            self.__reward_session_writer = csv.writer(session_reward_file)
+            self.__reward_session_writer.writerow(["Episode", "Cumulative Reward"])
+
+        self._session = value
+
+    @property
+    def episode(self):
+        return self._episode
+
+    @episode.setter
+    def episode(self, value):
+        if self.__logging_enabled and Settings.LOG_EPISODE_REWARD:
+            #       create reward file writer
+            reward_path = os.path.join(self.__session_path, "episode_" + str(value))
+            reward_file = open(reward_path, 'w', newline='')
+            self.__reward_episode_writer = csv.writer(reward_file)
+            self.__reward_episode_writer.writerow(["Step", "Reward"])
+
+        self._episode = value
+
+    @property
+    def step(self):
+        return self._step
+
+    @step.setter
+    def step(self, value):
+        self._step = value
+
+    def log_step_record(self, step_record):
+        if self.__logging_enabled and Settings.LOG_EPISODE_REWARD:
+            self.__reward_episode_writer.writerow([self.step, step_record[4]])
 
     def print(self, string, log_level = 0):
         if self.__logging_enabled and log_level.value >= Settings.LOG_LEVEL:
             print(string)
 
-    def log_training(self, model_name, training_history):
-        # create csv writer
-        training_path = os.path.join(self.__log_folder, model_name + '_log.csv')
-        training_file = open(training_path, 'w', newline='')
-        training_csv = csv.writer(training_file)
-
-        # AtomicModel logs
-        if type(training_history) is not dict:
-            # write column headers
-            training_csv.writerow(["Epoch", "TA", "VA"])
-
-            # write training history
+    def log_training(self, training_history):
+        if self.__logging_enabled and Settings.LOG_TRAINING:
             for epoch in range(len(training_history.epoch)):
-                epoch_accuracy = training_history.history["accuracy"][epoch]
-                epoch_val_accuracy = training_history.history["val_accuracy"][epoch]
-                training_csv.writerow([epoch, epoch_accuracy, epoch_val_accuracy])
+                epoch_mse = training_history.history["mse"][epoch]
+                epoch_val_mse = training_history.history["val_mse"][epoch]
+                self.__actor_train_writer.writerow([epoch, epoch_mse, epoch_val_mse])
 
-        # CompositeModel logs
-        else:
-            # write column headers
-            column_headers = ["Epoch"]
-            for digit_index in range(10):
-                column_headers.extend(["Model " + str(digit_index) + " TA", "Model " + str(digit_index) + " VA"])
-            training_csv.writerow(column_headers)
+    def log_evaluation(self, mse):
+        if self.__logging_enabled and Settings.LOG_EVALUATION:
+            self.__actor_evaluate_writer.writerow([self.episode, mse])
 
-            # write training history
-            for epoch in range(len(list(training_history.values())[0].epoch)):
-                record_row = [None] * 21
-                record_row[0] = epoch
-                for digit, digit_history in training_history.items():
-                    record_row[1 + (digit * 2)] = digit_history.history["accuracy"][epoch]
-                    record_row[1 + (digit * 2) + 1] = digit_history.history["val_accuracy"][epoch]
-
-                training_csv.writerow(record_row)
-
-    def log_evaluation(self, model_name, val_accuracy):
-        self.__accuracy_file.write(model_name + ": " + str(val_accuracy) +"\n")
+    def log_session(self, reward_history):
+        if self.__logging_enabled and Settings.LOG_SESSION_REWARD:
+            for episode_index in range(1, len(reward_history)):
+                episode_reward = reward_history[episode_index]
+                self.__reward_session_writer.writerow([episode_index, episode_reward])
 
     def visualize_training(self, model_name, training_history):
         # AtomicModel logs
-        if type(training_history) is not dict:
-            plt.figure()
-            plt.title(model_name + " training history")
-            plt.xlabel("Epoch")
-            plt.ylabel("Accuracy")
+        plt.figure()
+        plt.title(model_name + " training history")
+        plt.xlabel("Epoch")
+        plt.ylabel("Accuracy")
 
-            epoch = training_history.epoch
-            accuracy = training_history.history["accuracy"]
-            val_accuracy = training_history.history["val_accuracy"]
-            
-            plt.plot(epoch, accuracy, "-r", label="Accuracy")
-            plt.plot(epoch, val_accuracy, "-b", label="Validation Accuracy")
+        epoch = training_history.epoch
+        accuracy = training_history.history["accuracy"]
+        val_accuracy = training_history.history["val_accuracy"]
+        
+        plt.plot(epoch, accuracy, "-r", label="Accuracy")
+        plt.plot(epoch, val_accuracy, "-b", label="Validation Accuracy")
 
-            plt.legend(loc="center right")
-            fig_path = os.path.join(self.__log_folder, model_name + " training.png")
-            plt.savefig(fig_path)
-
-        # CompositeModel logs
-        else:
-            epoch = list(training_history.values())[0].epoch
-
-            plt.figure()
-            plt.title(model_name + " accuracy history")
-            plt.xlabel("Epoch")
-            plt.ylabel("Accuracy")
-            for digit, digit_history in training_history.items():
-                digit_accuracy = digit_history.history["accuracy"]
-                plt.plot(epoch, digit_accuracy, label="sub-model " + str(digit))
-
-            plt.legend(loc="center right")
-            fig_path = os.path.join(self.__log_folder, model_name + " accuracy.png")
-            plt.savefig(fig_path)
-
-            plt.figure()
-            plt.title(model_name + " validation accuracy history")
-            plt.xlabel("Epoch")
-            plt.ylabel("Accuracy")
-            for digit, digit_history in training_history.items():
-                digit_val_accuracy = digit_history.history["val_accuracy"]
-                plt.plot(epoch, digit_val_accuracy, label="sub-model " + str(digit))
-
-            plt.legend(loc="center right")
-            fig_path = os.path.join(self.__log_folder, model_name + " val accuracy.png")
-            plt.savefig(fig_path)
-
-    def log_misses(self, model_name, misses):
-        # create csv writer
-        miss_path = os.path.join(self.__log_folder, model_name + '_misses.csv')
-        miss_file = open(miss_path, 'w', newline='')
-        miss_csv = csv.writer(miss_file)
-
-        miss_csv.writerow(["Miss Difference"])
-        for miss in misses:
-            miss_csv.writerow([miss])
+        plt.legend(loc="center right")
+        fig_path = os.path.join(self.__log_folder, model_name + " training.png")
+        plt.savefig(fig_path)
 
     def __set_plt_params(self):
         background_color = "#1E1E1E"

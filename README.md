@@ -1,20 +1,32 @@
-# MNIST-Exploration
-This repo is an exploration of idea of specialization with neural networks trained on the MNIST dataset.
+# State-Actor
+This repo is an exploration of idea of composition with neural networks trained with gym environments.
 
-Dataset info
-    MNIST contains images of handwritten digits from 500 writers
-    The dataset includes 60,000 training and 10,000 test images
-    Input data
-        Each image has a size of 28x28
-        Each image is greyscale with values ranging from [0, 255] of type uint8
-        0 denotes an empty pixel (white), 255 is a fully colored in pixel (black)
-    Ouput data
-        There are 10 labels, one for each digit
-        The labels are type uint8
+Environment info (from https://github.com/openai/gym/blob/6e2e921b5faaa9c356f589e4e938e718824c7d4a/gym/envs/classic_control/cartpole.py)
+    Action Space
+        The action is a `ndarray` with shape `(1,)` which can take values `{0, 1}` indicating the direction
+        of the fixed force the cart is pushed with.
 
-Parameter of dense layer: (current layer neurons * previous layer neurons) + current layer neurons
-Parameter added by additional neuron in middle layer: previous layer neurons + previous layer neurons + 1
+        | Num | Action                 |
+        |-----|------------------------|
+        | 0   | Push cart to the left  |
+        | 1   | Push cart to the right |
+    
+    Observation Space
+        The observation is a `ndarray` with shape `(4,)` with the values corresponding to the following positions and velocities:
+
+        | Num | Observation           | Min                 | Max               |
+        |-----|-----------------------|---------------------|-------------------|
+        | 0   | Cart Position         | -4.8                | 4.8               |
+        | 1   | Cart Velocity         | -Inf                | Inf               |
+        | 2   | Pole Angle            | ~ -0.418 rad (-24°) | ~ 0.418 rad (24°) |
+        | 3   | Pole Angular Velocity | -Inf                | Inf               |
+
+    Rewards
+        Since the goal is to keep the pole upright for as long as possible, a reward of `+1` for every step taken, including the termination step, is allotted. The threshold for rewards is 475 for v1.
 
 TODO:
-    Add InputShape to settings?
-    Add timer to logger to measure train and predict time?
+    Figure out mechanism for comparing rewards between different architectures
+    Create mechanism to aggregate rewards and maybe apply smoothing
+    Create more normal A2C model for comparison
+
+    
