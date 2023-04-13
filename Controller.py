@@ -1,40 +1,89 @@
+import gym
+import numpy as np
 import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+import time
 
+from ActionDictionary import ActionDictionary
 from Architectures import Architectures
-from AtomicModel import AtomicModel
-from CompositeModel import CompositeModel
-from DataManager import DataManager
-from Logger import Logger
+import Settings
 
 class Controller:
     def __init__(self):
-        self.__logger = Logger()
-        self.__data_manager = DataManager()
+        # self.__env = gym.make("CartPole-v1", render_mode='human')
+        self.__env = gym.make("CartPole-v1")
 
-        # Intialize experiments to run
-        self.__atomic_experiments = [] # format: Architectures.FC_2_512
-        self.__composite_experiments = [] # format: (Architectures.FC_2_512, [0, 1, 2, ..., 9])
+        run_folder = self.get_run_folder()
+        experiments = [(Architectures.FC_3_64, Architectures.REWARD_1_64)] # format: (sub_model_architecture, reward_architecture)
 
-        self.run_experiments()
+        self.run_experiments(run_folder, experiments)
 
-    def run_experiments(self):
-        models = []
+    def get_run_folder(self):
+        # get current directory path
+        dir_path = os.path.dirname(os.path.abspath(__file__))
 
-        # intialize models
-        for architecture in self.__atomic_experiments:
-            models.append(AtomicModel(self.__logger, self.__data_manager, architecture))
+        # create sub-folder for logs
+        log_folder = os.path.join(dir_path, "logs")
+        if not os.path.isdir(log_folder):
+            os.mkdir(log_folder)
 
-        for (architecture, digits) in self.__composite_experiments:
-            models.append(CompositeModel(self.__logger, self.__data_manager, architecture, digits))
+        # create sub-folder for specific run
+        run_folder = os.path.join(log_folder, str(time.strftime("%Y-%m-%d_%H-%M-%S")))
+        if not os.path.isdir(run_folder):
+            os.mkdir(run_folder)
 
-        # train models
-        for model in models:
-            model.train()
+        return run_folder
 
-        # evaluate models
-        for model in models:
-            model.evaluate()
+    def run_experiments(self, log_folder, experiments):
+        for sub_model_architecture, reward_architecture in experiments:
+            action_dictionary = ActionDictionary(log_folder, sub_model_architecture, reward_architecture)
+
+            for action_dictionary.logger.session in range(Settings.SESSION_COUNT):
+                session_start = time.time()
+                self.epsilon_exploration(action_dictionary)
+                action_dictionary.reset()
+                session_end = time.time()
+                session_duration = (session_end - session_start)
+                # ~ 4.5 minutes. 
+                print("\tsession duration: " + str(session_duration) + " s")
+
+    # execute best predicted action with increasing probability
+    def epsilon_exploration(self, action_dictionary):
+        print("\nController(epsilon_exploration): submodel:" + action_dictionary.get_actor_name() + " reward:" + action_dictionary.get_critic_name())
+        epsilon = Settings.EPSILON_START
+
+        rewards_list = []
+        for action_dictionary.logger.episode in range(Settings.EPISODE_COUNT):
+            state = self.__env.reset()
+            state = np.reshape(state, [1, Settings.OBSERVATION_SIZE])
+            reward_for_episode = 0
+            for action_dictionary.logger.step in range(Settings.MAX_TRAINING_STEPS):
+                if np.random.rand() < epsilon:
+                    action_index, predicted_next_state = action_dictionary.predict_random_action(state) 
+                else:
+                    action_index, predicted_next_state = action_dictionary.predict_optimal_action(state) 
+
+                next_state, reward, done, info = self.__env.step(action_index)
+                action_dictionary.put_record_data([state, action_index, predicted_next_state, next_state, reward, done])
+
+                next_state = np.reshape(next_state, [1, Settings.OBSERVATION_SIZE])
+                reward_for_episode += reward
+                state = next_state
+
+                action_dictionary.train_models()
+
+                if done:
+                    break
+                
+            # reduce probability of random action
+            if epsilon > Settings.EPSILON_MIN:
+                epsilon *= Settings.EPSILON_DECAY
+
+            action_dictionary.evaluate_models()
+            rewards_list.append(reward_for_episode)
+            last_rewards_mean = np.mean(rewards_list[-30:])
+            print("\tEpisode: ", action_dictionary.logger.episode, " || Reward: ", reward_for_episode, " || Average Reward: ", last_rewards_mean)
+
+        action_dictionary.logger.log_session(rewards_list)
 
 if __name__ == '__main__':
     Controller()

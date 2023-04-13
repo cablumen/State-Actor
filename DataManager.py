@@ -1,115 +1,85 @@
 import numpy as np
-import tensorflow as tf
 import random
 
 import Settings
 
+
 class DataManager:
     def __init__(self):
-        mnist = tf.keras.datasets.mnist
-        (self.__x_train, y_train), (self.__x_test, y_test) = mnist.load_data()
+        # [[state, action_index, predicted_next_state, next_state, reward, done], ...]
+        self.__replay_data = []
     
-        # convert to "one-hot" vectors using the to_categorical function
-        self.__y_train = tf.keras.utils.to_categorical(y_train, Settings.LABELS, dtype='uint8')
-        self.__y_test = tf.keras.utils.to_categorical(y_test, Settings.LABELS, dtype='uint8')
+    #       action data
+    def get_actor_data(self):
+        return self.__get_random_actor_data()
 
-        # create datasets for digit sub-models
-        # {digit -> ([y_train], [y_test])
-        self.__digit_data = {}
-        for digit_index in range(Settings.LABELS):
-            digit_y_train = np.array([[i[digit_index]] for i in self.__y_train])
-            digit_y_test = np.array([[i[digit_index]] for i in self.__y_test])
-            self.__digit_data[digit_index] = (digit_y_train, digit_y_test)
+    def is_actor_training_ready(self):
+        return len(self.__replay_data) >= Settings.BATCH_SIZE * 2
 
-    #       get training data
-    def get_training_data(self):
-        return self.__x_train, self.__y_train
+    #       critic data
+    def get_critic_data(self):
+        return self.__get_random_critic_data()
 
-    def get_training_datasize(self):
-        return len(self.__y_train)
+    def is_critic_training_ready(self):
+        return len(self.__replay_data) >= Settings.BATCH_SIZE
 
-    def get_batch_training_data(self):
-        return self.__get_batched_data(self.__x_train, self.__y_train)
+    #       other
+    def put_replay_data(self, step_record):
+        return self.__replay_data.append(step_record)
 
-    def get_random_training_data(self):
-        return self.__get_random_data(self.__x_train, self.__y_train)
-        
-    #       get test data
-    def get_test_data(self):
-        return self.__x_test, self.__y_test
-
-    def get_test_datasize(self):
-        return len(self.__y_test)
-
-    def get_batch_test_data(self):
-        return self.__get_batched_data(self.__x_test, self.__y_test)
-
-    def get_random_test_data(self):
-        return self.__get_random_data(self.__x_test, self.__y_test)
-    
-    #       get digit training data
-    def get_digit_training_data(self, digit_index):
-        return self.__x_train, self.__digit_data[digit_index][0]
-
-    def get_batch_digit_training_data(self, digit_index):
-        return self.__get_batched_data(self.__x_train, self.__digit_data[digit_index][0])
-        
-    def get_random_digit_training_data(self, digit_index):
-        return self.__get_random_data(self.__x_train, self.__digit_data[digit_index][0])
-
-
-    #       get digit test data
-    def get_digit_test_data(self, digit_index):
-        return self.__x_test, self.__digit_data[digit_index][1]
-
-    def get_batch_digit_test_data(self, digit_index):
-        return self.__get_batched_data(self.__x_test, self.__digit_data[digit_index][1])
-
-    def get_random_digit_test_data(self, digit_index):
-        return self.__get_random_data(self.__x_test, self.__digit_data[digit_index][1])
-    
+    def reset(self):
+        self.__replay_data = []
 
     #       private functions
-    def __get_random_data(self, x_data, y_data):
-        y_datasize = len(y_data)
-        assert Settings.BATCH_SIZE <= y_datasize, "DataManager(get_random_data): expected batch size smaller than {y_datasize}, got {Settings.BATCH_SIZE}"
+    def __get_random_actor_data(self):
+        train_x = np.empty((Settings.BATCH_SIZE, Settings.OBSERVATION_SIZE+1), dtype=np.float32)
+        train_y = np.empty((Settings.BATCH_SIZE, Settings.OBSERVATION_SIZE), dtype=np.float32)
+        test_x = np.empty((Settings.BATCH_SIZE, Settings.OBSERVATION_SIZE+1), dtype=np.float32)
+        test_y = np.empty((Settings.BATCH_SIZE, Settings.OBSERVATION_SIZE), dtype=np.float32)
 
-        random_x = np.empty((Settings.BATCH_SIZE, x_data[0].shape[0], x_data[0].shape[1]), dtype=np.uint8)
-        random_y = np.empty((Settings.BATCH_SIZE, Settings.LABELS), dtype=np.uint8)
+        # randomly generate action indicies to sample
+        random_indicies = random.sample(range(0, len(self.__replay_data)), Settings.BATCH_SIZE * 2)
+        sampled_training_indicies = random_indicies[0:Settings.BATCH_SIZE]
+        sampled_validation_indicies = random_indicies[Settings.BATCH_SIZE:]
 
-        # randomly generate indicies to sample
-        random_indicies = random.sample(range(0, len(y_data)), Settings.BATCH_SIZE)
+        # populate test sample
+        # TODO: maybe go back to delta next state
+        batch_index = 0
+        for random_index in sampled_training_indicies:
+            record = self.__replay_data[random_index]
+            train_x[batch_index] = np.insert(record[0], 0, record[1], axis=1) 
+            train_y[batch_index] = record[3] - record[0]
+            batch_index += 1
+
+        
+        # populate validation sample
+        batch_index = 0
+        for random_index in sampled_validation_indicies:
+            record = self.__replay_data[random_index]
+            test_x[batch_index] = np.insert(record[0], 0, record[1], axis=1)
+            test_y[batch_index] = record[3] - record[0]
+            batch_index += 1
+
+        return train_x, train_y, test_x, test_y
+
+    #       private functions
+    def __get_random_critic_data(self):
+        states = np.empty((Settings.BATCH_SIZE, Settings.OBSERVATION_SIZE), dtype=np.float32)
+        next_states = np.empty((Settings.BATCH_SIZE, Settings.OBSERVATION_SIZE), dtype=np.float32)
+        rewards = np.empty(Settings.BATCH_SIZE, dtype=float)
+        dones = np.empty(Settings.BATCH_SIZE, dtype=np.int32)
+    
+        random_indicies = random.sample(range(0, len(self.__replay_data)), Settings.BATCH_SIZE)
 
         # populate test sample
         batch_index = 0
-        for data_index in random_indicies:
-            random_x[batch_index] = x_data[data_index]
-            random_y[batch_index] = y_data[data_index]
+        for random_index in random_indicies:
+            action_data = self.__replay_data[random_index]
+
+            states[batch_index] = action_data[0]
+            next_states[batch_index] = action_data[3]
+            rewards[batch_index] = action_data[4]
+            dones[batch_index] = action_data[5]
             batch_index += 1
 
-        return random_x, random_y
-
-    def __get_batched_data(self, x_data, y_data):
-        y_datasize = len(y_data)
-        assert Settings.BATCH_SIZE <= y_datasize, "DataManager(get_batched_data): expected batch size smaller than {y_datasize}, got {Settings.BATCH_SIZE}"
-
-        batched_x, batched_y = [], []
-        batch_count = int(y_datasize / Settings.BATCH_SIZE)
-        if y_datasize % Settings.BATCH_SIZE != 0:
-            batch_count += 1
-        
-        for batch_index in range(batch_count):
-            range_start = batch_index * Settings.BATCH_SIZE
-
-            if (batch_index + 1) * Settings.BATCH_SIZE <= y_datasize:
-                range_end = (batch_index + 1) * Settings.BATCH_SIZE
-            else:
-                range_end = y_datasize
-
-            batched_x.append(x_data[range_start:range_end])
-            batched_y.append(y_data[range_start:range_end])
-
-        return batched_x, batched_y
-
-if __name__ == '__main__':
-    DataManager()
+        return states, next_states, rewards, dones
