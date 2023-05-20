@@ -1,5 +1,5 @@
-import numpy as np
 import os
+import numpy as np
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 from Architectures import Architectures

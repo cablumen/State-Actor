@@ -1,90 +1,55 @@
-from collections import deque
 import csv
 import os
-import shutil
-import statistics
+import numpy as np
 
 
-start_index = episode_index - 9
-if start_index < 0:
-    start_index = 0
-reward_smoothing_10 = np.mean(reward_history[start_index:episode_index])
+# get path to record folder
+cur_dir_path = os.path.dirname(os.path.abspath(__file__))
+file_names = os.listdir(cur_dir_path)
+print("Select directory from list")
+for name in file_names:
+    if os.path.isdir(name):
+        print("\t" + name)
 
-start_index = episode_index - 29
-if start_index < 0:
-    start_index = 0
-reward_smoothing_30 = np.mean(reward_history[start_index:episode_index])
+# record_dir_name = input()
+record_dir_name = "Reward Architecture Testing"
+record_dir_path = os.path.join(cur_dir_path, record_dir_name)
 
-dir_path = os.path.dirname(os.path.abspath(__file__))
+# get path to each run folder
+run_paths = []
+run_names = os.listdir(record_dir_path)
+for name in run_names:
+    run_path = os.path.join(record_dir_path, name)
+    if os.path.isdir(run_path):
+        run_paths.append(run_path)
 
-record_path = os.path.join(dir_path, 'training records')
+for run_path in run_paths:
+    model_name = os.path.basename(run_path)
 
-# create fresh sub-folder for all training records
-aggregation_dir = os.path.join(dir_path, 'record aggregation')
-if os.path.isdir(aggregation_dir):
-    shutil.rmtree(aggregation_dir)
-    os.mkdir(aggregation_dir)
-else:
-    os.mkdir(aggregation_dir)
+    # get path to each session folder
+    session_paths = []
+    session_names = os.listdir(run_path)
+    for name in session_names:
+        session_path = os.path.join(run_path, name)
+        if os.path.isdir(session_path):
+            session_paths.append(session_path)
 
-# there are 1 csv per action per row 
-self.__csv_readers = {}
-self.__csv_writers = {}
-for sub_directory in os.listdir(record_path):
-    directory_path = os.path.join(record_path, sub_directory)
-    for run_file_name in os.listdir(directory_path):
-        file_name, file_extension = os.path.splitext(run_file_name)
-        if file_extension == ".csv":
-            action_name = file_name.replace("_log", "")
+    print(str(model_name) + ": detected " + str(len(session_paths)) + " session runs")
 
-            if action_name not in self.__csv_readers:
-                self.__csv_readers[action_name] = []
+    run_evaluations = []
+    for session_path in session_paths:
+        evaluation_reader = csv.reader(open(os.path.join(session_path, "reward.csv")))
+        next(evaluation_reader)
 
-            
-            if action_name not in self.__csv_writers:
-                aggregation_path = os.path.join(aggregation_dir, action_name + '.csv')
-                aggregation_file = open(aggregation_path, 'w', newline='')
-                aggregation_writer = csv.writer(aggregation_file)
-                self.__csv_writers[action_name] = aggregation_writer
+        session_evaluations = []
+        session_evaluations_mean = []
+        for row in evaluation_reader:
+            evaluation_mse = float(row[1])
+            session_evaluations.append(evaluation_mse)
+            session_evaluations_mean.append(np.mean(session_evaluations[-30:]))
 
-            
-            run_path = os.path.join(directory_path, run_file_name)
-            run_file = open(run_path, 'r', newline='')
-            run_reader = csv.reader(run_file)
-            self.__csv_readers[action_name].append(run_reader)
+        run_evaluations.append(session_evaluations_mean[-1])
 
-for action_name, csv_reader_list in self.__csv_readers.items():
-    records_per_action = len(csv_reader_list)
-    record_index = 1
-
-    action_data = []
-
-    # add headers for first reader
-    header_list = ["Batch"]
-    for header_index in range(records_per_action):
-        header_list.append("Model_" + str(header_index) + " training loss")
-        header_list.append("Model_" + str(header_index) + " average loss")
-
-    action_data.append(header_list)
-
-    for csv_reader in csv_reader_list:
-        next(csv_reader)
-        row_averages = deque(maxlen=20)
-        for row in csv_reader:
-            batch = int(row[0])
-            training_loss = float(row[1])
-
-            # if a batch number exceeds the current data size, append an empty row
-            if batch >= len(action_data):
-                action_data.append([None] * (2 * records_per_action  + 1))
-                action_data[batch][0] = batch
-
-            row_averages.append(training_loss)
-            cur_average = statistics.mean(row_averages)
-
-            action_data[batch][record_index] = training_loss
-            action_data[batch][record_index + 1] = cur_average
-
-        record_index += 2
-
-    self.__csv_writers[action_name].writerows(action_data)
+    run_mean = np.mean(run_evaluations)
+    print("\trun_mean=" + str(run_mean))
+    print("")

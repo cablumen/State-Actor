@@ -1,19 +1,20 @@
-import gym
-import numpy as np
 import os
 import time
+import gym
+import numpy as np
 
 from ActionDictionary import ActionDictionary
 from Architectures import Architectures
 import Settings
 
+
 class Controller:
     def __init__(self):
-        # self.__env = gym.make("CartPole-v1", render_mode='human')
-        self.__env = gym.make("CartPole-v1")
+        # self.env = gym.make("CartPole-v1", render_mode='human')
+        self.env = gym.make("CartPole-v1")
 
         run_folder = self.get_run_folder()
-        experiments = [(Architectures.FC_3_64, Architectures.REWARD_1_64)] # format: (sub_model_architecture, reward_architecture)
+        experiments = [(Architectures.FC_5_32, Architectures.REWARD_3_64)] # format: (sub_model_architecture, reward_architecture)
 
         self.run_experiments(run_folder, experiments)
 
@@ -36,15 +37,9 @@ class Controller:
     def run_experiments(self, log_folder, experiments):
         for sub_model_architecture, reward_architecture in experiments:
             action_dictionary = ActionDictionary(log_folder, sub_model_architecture, reward_architecture)
-
             for action_dictionary.logger.session in range(Settings.SESSION_COUNT):
-                session_start = time.time()
                 self.epsilon_exploration(action_dictionary)
                 action_dictionary.reset()
-                session_end = time.time()
-                session_duration = (session_end - session_start)
-                # ~ 4.5 minutes. 
-                print("\tsession duration: " + str(session_duration) + " s")
 
     # execute best predicted action with increasing probability
     def epsilon_exploration(self, action_dictionary):
@@ -53,16 +48,16 @@ class Controller:
 
         rewards_list = []
         for action_dictionary.logger.episode in range(Settings.EPISODE_COUNT):
-            state = self.__env.reset()
+            state = self.env.reset()[0]
             state = np.reshape(state, [1, Settings.OBSERVATION_SIZE])
             reward_for_episode = 0
             for action_dictionary.logger.step in range(Settings.MAX_TRAINING_STEPS):
                 if np.random.rand() < epsilon:
-                    action_index, predicted_next_state = action_dictionary.predict_random_action(state) 
+                    action_index, predicted_next_state = action_dictionary.predict_random_action(state)
                 else:
-                    action_index, predicted_next_state = action_dictionary.predict_optimal_action(state) 
+                    action_index, predicted_next_state = action_dictionary.predict_optimal_action(state)
 
-                next_state, reward, done, info = self.__env.step(action_index)
+                next_state, reward,  done, info, _ = self.env.step(action_index)
                 action_dictionary.put_record_data([state, action_index, predicted_next_state, next_state, reward, done])
 
                 next_state = np.reshape(next_state, [1, Settings.OBSERVATION_SIZE])
@@ -73,7 +68,7 @@ class Controller:
 
                 if done:
                     break
-                
+
             # reduce probability of random action
             if epsilon > Settings.EPSILON_MIN:
                 epsilon *= Settings.EPSILON_DECAY
@@ -81,7 +76,7 @@ class Controller:
             action_dictionary.evaluate_models()
             rewards_list.append(reward_for_episode)
             last_rewards_mean = np.mean(rewards_list[-30:])
-            print("\tEpisode: ", action_dictionary.logger.episode, " || Reward: ", reward_for_episode, " || Average Reward: ", last_rewards_mean)
+            print(f"\tEpisode: {action_dictionary.logger.episode:3.0f} || Reward: {reward_for_episode:3.0f} || Average Reward: {last_rewards_mean:3.4f}")
 
         action_dictionary.logger.log_session(rewards_list)
 

@@ -1,27 +1,27 @@
-import matplotlib.pyplot as plt
-import numpy as np
 import os
 import time
+import matplotlib.pyplot as plt
+import numpy as np
 
 import Settings
 
 
 class MetricCalculator:
     def __init__(self, environment):
-        self.__env = environment
+        self.env = environment
 
         # get current directory path
         dir_path = os.path.dirname(os.path.abspath(__file__))
-        
+
         # create sub-folder for all training data and graphs
         experiment_path = os.path.join(dir_path, "experiment records")
         if not os.path.isdir(experiment_path):
             os.mkdir(experiment_path)
 
         # create sub-folder for specific run
-        self.__log_folder = os.path.join(experiment_path, str(time.strftime("%Y-%m-%d_%H-%M-%S")))
-        if not os.path.isdir(self.__log_folder):
-            os.mkdir(self.__log_folder)
+        self.log_folder = os.path.join(experiment_path, str(time.strftime("%Y-%m-%d_%H-%M-%S")))
+        if not os.path.isdir(self.log_folder):
+            os.mkdir(self.log_folder)
 
     def calculate_divergence(self, action_dictionary, sequence_length):
         action_count = action_dictionary.get_action_count()
@@ -29,12 +29,12 @@ class MetricCalculator:
             action_metric_averages = []
             while len(action_metric_averages) < 25:
                 epsiode_metrics = []
-                state = self.__env.reset()
+                state = self.env.reset()
                 state = np.reshape(state, [1, Settings.OBSERVATION_SIZE])
                 for step in range(Settings.MAX_TRAINING_STEPS):
-                    step_action_index, predicted_next_state = action_dictionary.predict_action(action_index, state) 
+                    step_action_index, predicted_next_state = action_dictionary.predict_action(action_index, state)
 
-                    next_state, reward, done, info = self.__env.step(step_action_index)                    
+                    next_state, reward, done, info = self.env.step(step_action_index)
                     step_metric = self.__calculate_abs_dif(next_state, predicted_next_state)
                     epsiode_metrics.append(step_metric)
 
@@ -47,7 +47,7 @@ class MetricCalculator:
 
                     if done:
                         break
-                
+
                 # only sample episodes greater than the sequence length
                 if len(epsiode_metrics) < sequence_length:
                     continue
@@ -73,7 +73,7 @@ class MetricCalculator:
             plt.ylabel("Action Divergence (ABS DIF)")
             plt.plot(action_sequence_indices, sequence_indices_metrics)
 
-            graph_path = os.path.join(self.__log_folder, "submodel_" + action_dictionary.get_submodel_name() + " reward_" + action_dictionary.get_reward_model_name() + " sequence_" + str(sequence_length) + " action_" + str(action_index) + ".png")
+            graph_path = os.path.join(self.log_folder, "submodel_" + action_dictionary.get_submodel_name() + " reward_" + action_dictionary.get_reward_model_name() + " sequence_" + str(sequence_length) + " action_" + str(action_index) + ".png")
             plt.savefig(graph_path)
             plt.close()
 

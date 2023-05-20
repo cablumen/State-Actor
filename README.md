@@ -28,5 +28,6 @@ TODO:
     Figure out mechanism for comparing rewards between different architectures
     Create mechanism to aggregate rewards and maybe apply smoothing
     Create more normal A2C model for comparison
-
+    Address style warnings
+    Your kernel may have been built without NUMA support
     

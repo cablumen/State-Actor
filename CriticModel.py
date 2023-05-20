@@ -1,4 +1,3 @@
-import numpy as np
 import tensorflow as tf
 
 import Settings
@@ -10,32 +9,28 @@ class CriticModel:
     def __init__(self, logger, data_manager, architecture):
         self.name = architecture.name
 
-        self.__logger = logger
-        self.__data_manager = data_manager
+        self.logger = logger
+        self.data_manager = data_manager
 
-        self.__architecture = architecture.value
-        self.__model = None
+        self.architecture = architecture.value
+        self.model = None
         self.reset()
 
-        self.__model_verbosity = True if Settings.LogLevel == 0 else False
+        self.model_verbosity = True if Settings.LogLevel == 0 else False
 
-    @tf.function
+    @tf.function(jit_compile=True)
     def train(self):
-        self.__logger.print("CriticModel(train): " + self.name, LogLevel.INFO)
-        if self.__data_manager.is_critic_training_ready():
-            states, next_states, rewards, dones = self.__data_manager.get_critic_data()
-            targets = rewards + GAMMA * self.predict_batch(next_states) * (1 - dones)
-            self.__model.fit(states, targets, epochs=Settings.EPOCHS, verbose=self.__model_verbosity)
-        
-    def predict(self, state):
-        self.__logger.print("CriticModel(predict): " + self.name, LogLevel.INFO)
-        return self.__model.predict(state, verbose=self.__model_verbosity)
+        self.logger.print("CriticModel(train): " + self.name, LogLevel.INFO)
+        if self.data_manager.is_critic_training_ready():
+            states, next_states, rewards, dones = self.data_manager.get_critic_data()
+            targets = rewards + GAMMA * self.predict(next_states) * (1 - dones)
+            self.model.fit(states, targets, epochs=Settings.EPOCHS, verbose=self.model_verbosity)
 
-    def predict_batch(self, state_batch):
-        self.__logger.print("CriticModel(predict_batch): " + self.name, LogLevel.INFO)
-        return self.__model.predict(state_batch, batch_size=Settings.BATCH_SIZE, verbose=self.__model_verbosity)
+    def predict(self, state):
+        self.logger.print("CriticModel(predict): " + self.name, LogLevel.INFO)
+        return self.model(state)
 
     def reset(self):
-        critic_model = tf.keras.models.clone_model(self.__architecture)
+        critic_model = tf.keras.models.clone_model(self.architecture)
         critic_model.compile(optimizer='adam', loss='mse', metrics=['mse'], jit_compile=True)
-        self.__model = critic_model
+        self.model = critic_model

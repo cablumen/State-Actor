@@ -6,11 +6,11 @@ LOG_EPISODE_REWARD = False          # whether to create a log file for episode r
 LOG_TRAINING = True                 # whether to create a log file for actor training
 LOG_EVALUATION = True               # whether to create a log file for actor evaluation
 
-BATCH_SIZE = 128                    # batch size for training and prediction
+BATCH_SIZE = 512                    # batch size for training and prediction
 EPOCHS = 40                         # epochs to train models and sub-models
 
 #   exploration parameters
-SESSION_COUNT = 5                   # session per architecture
+SESSION_COUNT = 10                  # session per architecture
 EPISODE_COUNT = 200                 # episodes per session
 MAX_TRAINING_STEPS = 300            # max steps per episode
 
